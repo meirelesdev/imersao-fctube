@@ -7,6 +7,9 @@ name = "pypi"
 django = "5.1.1"
 pillow = "10.4.0"
 psycopg2-binary = "2.9.9"
+kombu = "*"
+djangorestframework = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 

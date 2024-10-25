@@ -1,18 +1,97 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:1.19.10-alpine
+    ports:
+      - 9000:80
+    volumes:
+      - ./.docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - external-storage:/media/uploads
+
+  app_nextjs:
+    build:
+      context: ./.docker/nextjs/
+    container_name: app_nextjs
+    working_dir: /app
+    volumes:
+      - ./frontend-nextjs:/app
+    # command: npm run dev
+    command: tail -f /dev/null
+    environment:
+      - DJANGO_API_URL=http://python_app:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - python_app
+
   python_app:
     build:
       context: ./.docker/python/
     container_name: python_app
     volumes:
       - ./admin-python:/usr/src/app
+      - external-storage:/media/uploads
     working_dir: /usr/src/app
-    command: bash -c "pipenv run python manage.py runserver 0.0.0.0:8000"
+    # command: bash -c "pipenv run python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     environment:
-      - PYTHONUNBUFFERED=1
+      PYTHONUNBUFFERED: 1
+      DEBUG: "true"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "mydb"
+      POSTGRES_HOST: "db"
+      POSTGRES_SSL_MODE: "disable"
+      RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672/"
+      CONVERSION_EXCHANGE: "conversion_exchange"
+      CONVERSION_KEY: "conversion"
+      CONFIRMATION_KEY: "finish-conversion"
+      CONFIRMATION_QUEUE: "finish_conversion_queue"
+      VIDEO_ROOT_PATH: "/media/uploads"
+      QUEUE_NAME: "video_conversion_queue"
+
+  conversor_go:
+    build:
+      context: ./.docker/conversor-go/
+    container_name: conversor_go
+    working_dir: /app
+    environment:
+      DEBUG: "true"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "mydb"
+      POSTGRES_HOST: "db"
+      POSTGRES_SSL_MODE: "disable"
+      RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672/"
+      CONVERSION_EXCHANGE: "conversion_exchange"
+      CONVERSION_KEY: "conversion"
+      CONFIRMATION_KEY: "finish-conversion"
+      CONFIRMATION_QUEUE: "finish_conversion_queue"
+      VIDEO_ROOT_PATH: "/media/uploads"
+      QUEUE_NAME: "video_conversion_queue"
+    volumes:
+      - ./conversor-go:/app
+      - external-storage:/media/uploads
+    tty: true
+    stdin_open: true
+    command: go run cmd/videoconverter/main.go
+    # command: tail -f /dev/null
+    ports:
+      - "8083:8080"
+    depends_on:
+      - db
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "admin"
 
   db:
     image: postgres:15.8-alpine3.20
@@ -26,3 +105,5 @@ services:
 
 volumes:
   postgres_data:
+  external-storage: 
+    external: true
