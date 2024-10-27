@@ -1,0 +1,5 @@
+{
+  "go.useLanguageServer": true,
+  "editor.inlineSuggest.enabled": true,
+  "tabnine.experimentalAutoImports": true
+}

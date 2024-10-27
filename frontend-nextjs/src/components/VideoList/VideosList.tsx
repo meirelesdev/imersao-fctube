@@ -2,17 +2,15 @@ import Link from "next/link";
 import { VideoModel } from "../../models";
 import { VideoCard } from "../VideoCard/VideoCard";
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export async function getVideos(search: string): Promise<VideoModel[]> {
-  await sleep(2000);
   const url = search
     ? `${process.env.DJANGO_API_URL}/videos?q=${search}`
     : `${process.env.DJANGO_API_URL}/videos`;
   const response = await fetch(url, {
     cache: "no-cache",
   });
-  return response.json();
+  const data = await response.json()
+  return data;
 }
 
 export type VideoListProps = {
@@ -20,7 +18,7 @@ export type VideoListProps = {
 };
 
 export async function VideosList(props: VideoListProps) {
-  const { search } = props;
+  const { search } = await props;
   const videos = await getVideos(search);
   return videos.length ? (
     videos.map((video) => (

@@ -1,0 +1,13 @@
+{
+  "name": "Conversor GO Dev Container",
+  "image": "golang:1.23-alpine",
+  "workspaceFolder": "/app",
+  "extensions": [
+    "golang.go",
+    "tabnine",
+  ],
+  "settings": {
+    "go.toolsManagement.autoUpdate": true
+  },
+  "postCreateCommand": "go mod tidy"
+}

@@ -6,11 +6,14 @@ const nextConfig = {
     images: {
         remotePatterns: [
             {
-                hostname: 'localhost'
+                hostname: 'python_app'
+            },
+            {
+                hostname: 'nginx'
             },
             {
                 hostname: 'host.docker.internal'
-            }
+            },
         ]
     }
 };
